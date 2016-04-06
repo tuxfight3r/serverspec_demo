@@ -18,9 +18,12 @@ rake spec            - runs the rake task as logged in user
 ```
 Please note that you need to setup a vm and add the fake ips `use provided add_fakeip_route.sh` and then you would be able to test it. 
 
-###DEMOPAGE:
-[Checkout the demo page
-here](http://htmlpreview.github.io/?https://github.com/tuxfight3r/serverspec_demo/blob/master/viewer/reports/index.html#/file/specresults-2016-04-05T12-17-04.json)
+###SCREENSHOT:
+![alt text][screenshot]
+
+[screenshot]:
+https://github.com/tuxfight3r/serverspec_demo/raw/master/roles_setup_external/viewer/reports.png
+"Report Screenshot"
 
 [viewer script credit goes to vincent bernat](https://github.com/vincentbernat/serverspec-example)
 
