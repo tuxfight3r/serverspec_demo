@@ -1,0 +1,137 @@
+require 'rake'
+require 'rspec/core/rake_task'
+require 'json'
+require 'colorize'
+
+task :spec    => 'spec:all'
+task :default => :spec
+
+#location to store json reports
+$REPORTS = "./viewer/reports"
+
+#define the roles for each host
+def roles (host)
+  roles=["files","cups"]
+  case host
+  when /localhost/
+    role << "nginx"
+  when /^10/
+    role << "smb"
+  end
+  roles
+end
+
+# Special version of RakeTask for serverspec which comes with better
+# reporting
+class ServerspecTask < RSpec::Core::RakeTask
+
+  attr_accessor :target
+
+  # Run our serverspec task. Errors are ignored.
+  def run_task(verbose)
+    json = "#{$REPORTS}/current/#{target}.json"
+    @rspec_opts = ["--format", "json", "--out", json]
+    system("env TARGET_HOST=#{target} #{spec_command}")
+    status(target, json) if verbose
+  end
+
+  # Display status of a test from its JSON output
+  def status(target, json)
+    begin
+      out = JSON.parse(File.read(json))
+      summary = out["summary"]
+      total = summary["example_count"]
+      failures = summary["failure_count"]
+      if failures > 0 then
+        print ("[%-3s/%-4s] " % [failures, total]).yellow, target, "\n"
+      else
+        print "[OK      ] ".green, target, "\n"
+      end
+    rescue Exception => e
+      print "[ERROR   ] ".red, target, " (#{e.message})", "\n"
+    end
+  end
+
+end
+
+
+namespace :spec do
+  targets = []
+  Dir.glob('./spec/*').each do |dir|
+    next unless File.directory?(dir)
+    target = File.basename(dir)
+    target = "_#{target}" if target == "default"
+    targets << target if target != "shared"
+  end
+
+  task :all     => targets
+  task :default => :all
+
+  targets.each do |target|
+    original_target = target == "_default" ? target[1..-1] : target
+    desc "Run serverspec tests to #{original_target}"
+    ServerspecTask.new(target.to_sym) do |t|
+      print "\nHOST: #{original_target} \t"
+      ENV['TARGET_HOST'] = original_target
+      t.target = original_target
+      t.pattern = "spec/#{original_target}/*_spec.rb"
+      t.verbose = true
+    end
+  end
+end
+
+namespace :reports do
+  desc "Clean up old reports"
+  task :clean do
+    FileUtils.rm_rf "#{$REPORTS}/current"
+  end
+
+  desc "Build final report"
+  task :build do
+    now = Time.now
+    fname = "#{$REPORTS}/run-%s.json" % [ now.strftime("%Y-%m-%dT%H:%M:%S") ]
+    File.open(fname, "w") { |f|
+      # Test results
+      tests = FileList.new("#{$REPORTS}/current/*.json").sort.map { |j|
+        content = File.read(j).strip
+        {
+          :hostname => File.basename(j, ".json"),
+          :results => JSON.parse(content.empty? ? "{}" : content)
+        }
+      }.to_a
+      # Relevant source files
+      sources = FileList.new("#{$REPORTS}/current/*.json").sort.map { |j|
+        content = File.read(j).strip
+        results = JSON.parse(content.empty? ? '{"examples": []}' : content)["examples"]
+        results.map { |r| r["file_path"] }
+      }.to_a.flatten(1).uniq
+      sources = sources.each_with_object(Hash.new) { |f, h|
+        h[f] = File.readlines(f).map { |l| l.chomp }.to_a
+      }
+      f.puts JSON.generate({ :version => 1,
+                             :tests => tests,
+                             :sources => sources })
+    }
+  end
+end
+
+# Before starting any task, cleanup reports
+all_check_tasks = Rake.application.tasks.select { |task|
+  task.name.start_with?("check:")
+}
+all_check_tasks.each { |t|
+  t.enhance [ "reports:clean" ]
+}
+
+# Build final report only after last check
+running_check_tasks = Rake.application.top_level_tasks.select { |task|
+  task.start_with?("check:") or task == "spec"
+}
+if not running_check_tasks.empty? then
+  Rake::Task[running_check_tasks.last].enhance do
+    Rake::Task["reports:build"].invoke
+  end
+  running_check_tasks.each { |t|
+    task "reports:build" => t
+  }
+end

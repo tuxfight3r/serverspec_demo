@@ -1,0 +1,121 @@
+---
+localhost:
+  :roles:
+    - nginx
+127.0.0.1:
+  :roles:
+    - nginx
+  :props:
+    :nginx_server_port: 8080
+127.0.0.2:
+  :roles:
+    - nginx
+    - smb
+  :props:
+    :nginx_server_port: 8081
+127.0.0.6:
+  :roles:
+    - nginx
+    - smb
+  :props:
+    :nginx_server_port: 8081
+127.0.0.11:
+  :roles:
+    - nginx
+127.0.0.12:
+  :roles:
+    - nginx
+127.0.0.13:
+  :roles:
+    - nginx
+127.0.0.14:
+  :roles:
+    - nginx
+127.0.0.15:
+  :roles:
+    - nginx
+10.0.2.15:
+  :roles:
+    - smb
+  :props:
+    :nginx_server_port: 80
+10.0.2.16:
+  :roles:
+    - nginx
+  :props:
+    :nginx_server_port: 80
+10.0.2.17:
+  :roles:
+    - nginx
+    - smb
+  :props:
+    :nginx_server_port: 80
+    :smb_server_port: 631
+10.0.2.19:
+  :roles:
+    - smb
+  :props:
+    :smb_server_port: 632
+10.0.2.20:
+  :roles:
+    - nginx
+    - smb
+  :props:
+    :nginx_server_port: 80
+    :smb_server_port: 631
+    :default_gateway: '10.0.2.1'
+10.0.2.23:
+  :roles:
+    - nginx
+    - smb
+  :props:
+    :nginx_server_port: 8080
+    :smb_server_port: 631
+10.0.2.24:
+  :roles:
+    - nginx
+    - smb
+  :props:
+    :nginx_server_port: 8080
+    :smb_server_port: 631
+    :cups_server_port: 632
+    :default_gateway: '10.0.2.1'
+10.0.2.26:
+  :roles:
+    - nginx
+    - smb
+10.0.2.27:
+  :roles:
+    - nginx
+    - smb
+10.0.2.28:
+  :roles:
+    - nginx
+    - smb
+10.0.2.30:
+  :roles:
+    - nginx
+    - smb
+10.0.2.31:
+  :roles:
+    - smb
+10.0.2.32:
+  :roles:
+    - smb
+10.0.2.33:
+  :roles:
+    - smb
+10.0.2.34:
+  :roles:
+    - smb
+10.0.2.35:
+  :roles:
+    - smb
+default:
+  :roles:
+    - base
+  :props:
+    :nginx_server_port: 80
+    :cups_server_port: 631
+    :smb_server_port: 639
+    :default_gateway: '10.0.2.2'
